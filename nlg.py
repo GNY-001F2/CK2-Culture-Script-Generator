@@ -27,7 +27,7 @@ class nlg:
     def __init__(self, source: str):
         self.process_file(source)
         self.append_keys()
-        self.prepare_name_string()
+        self.prepare_name_strings()
 
     '''
     Opens the file, read all the lines, and creates the appropriate lists.
@@ -40,18 +40,26 @@ class nlg:
                 while(namekeystring[0] == '#'):
                     namekeystring = openedsource.readline()
                 culturelinelist = openedsource.readlines()
+                #print(culturelinelist)
         except:
             print("Could not open file because it does not exist.")
             exit()
-
+        # Need to remove the newlines
+        namekeystring = namekeystring[:-1]
+        for i in range(0, len(culturelinelist)):
+            culturelinelist[i] = culturelinelist[i][:-1]
+        #print(namekeystring)
+        #print(culturelinelist)
         namekeylist = namekeystring.split(";")[1:]
         culturedict = {}
         for culturelinestr in culturelinelist:
             culturenamelist = culturelinestr.split(";")
-            culturedict[culturenamelist[0]] = culturenamelist[1:0]
-
+            #print(culturelinestr)
+            culturedict[culturenamelist[0]] = culturenamelist[1:]
         self.__culturedict = copy.deepcopy(culturedict)
         self.__namekeylist = copy.deepcopy(namekeylist)
+        #print(self.__culturedict)
+        #print(self.__namekeylist)
 
     '''
     Attaches key at the end of each name.
@@ -61,13 +69,13 @@ class nlg:
         namekeylist = self.__namekeylist
         # Use local copy instead of modifying global instance variables
         culturedict = copy.deepcopy(self.__culturedict)
-        for namekey, i, culturekey in zip(namekeylist,
-                                          range(0, len(namekeylist)),
-                                          self.__culturedict):
+        for i, culturekey in zip(range(0, len(namekeylist)),
+                                 self.__culturedict):
             culturedict[culturekey][i] = \
-                self.__append_keys_(namekey, self.__culturedict[culturekey][i])
-
+                self.__append_keys_(namekeylist[i],
+                                    self.__culturedict[culturekey][i])
         self.__culturedict_ = copy.deepcopy(culturedict)
+        #print(self.__culturedict_)
 
     '''
     Helper function that appends the key at the end of each name and returns
@@ -87,10 +95,41 @@ class nlg:
                 namelist[i] = namekey + "_" + namekey
             else:
                 namelist[i] += "_" + namekey
+            if " " in namelist[i]:
+                namelist[i] = "\"" + namelist[i] + "\""
         return namelist
+
+    def prepare_name_strings(self):
+        culturedict = {}
+        #print(self.__culturedict_)
+        for culturekey in self.__culturedict_:
+            culturedict[culturekey] = \
+                self.__unpack_list_(self.__culturedict_[culturekey])
+        # Finally ready for human consumption
+        self.culturedict = copy.deepcopy(culturedict)
+        print(self.culturedict)
+
+    def __unpack_list_(self, namelist: list) -> list:
+        unpackednamelist = []
+        for namesublist in namelist:
+            for namestring in namesublist:
+                unpackednamelist.append(namestring)
+        return unpackednamelist
 
 if __name__ == "__main__":
     import argparse
+    from typing.io import TextIO
+
+    '''
+    As the name describes, it writes the names to file.
+    '''
+    def write_names_to_file(target: TextIO, culturedict: dict):
+        for culturekey, namelist in culturedict:
+            target.write(culturekey+" = {\n    ")
+            for name in namelist:
+                target.write(name + " ")
+            target.write("\n}")
+
     parser = \
         argparse.ArgumentParser(description="Generate a list of names",
                                 formatter_class=argparse.RawTextHelpFormatter)
@@ -102,10 +141,13 @@ if __name__ == "__main__":
                         default="male_names_list.txt", help="The file "
                         "containing the namelist with appended keys with the "
                         "path to the file. The default is "
-                        "\"male_names_list.txt\".\n")
-    parser.add_argument("-g", "--gender", type=str, default="m", help="The "
-                        "gender of the names in the list. By default, it is "
-                        "assumed that the names are male.")
+                        "\"male_names_list.txt\". Any existing file with the "
+                        "same name will be overwritten.\n")
 
     args = parser.parse_args()
     nlg_obj = nlg(args.source)
+    try:
+        with open(args.target, mode="w", encoding="cp1252") as target:
+            write_names_to_file(target, nlg_obj.culturedict)
+    except:
+        print("Some serious error occurred.")
