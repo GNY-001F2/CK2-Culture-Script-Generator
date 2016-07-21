@@ -27,7 +27,7 @@ class nlg:
         self.namedict = {}
         for namelist in self.__namelists:
             namedict[namelist[0]] = namelist[1:]
-        self.generate_mapping()
+        self.append_keys()
 
     '''
     Opens the file, read all the lines, and creates the appropriate lists.
@@ -66,11 +66,19 @@ class nlg:
             for unsplitnamestring in _namelist:
                 if not ',' in unsplitnamestring:
                     unsplitnamestring += "_" + _namekey
+                    if unsplitnamestring[0] == "@":
+                        unsplitnamestring = _namekey + unsplitnamestring[1:]
+                    elif unsplitnamestring[0] == "~":
+                        unsplitnamestring = ""
                 else:
                     splitnamestring = unsplitnamestring.split(',')
                     unsplitnamestring_new = ""
                     for name in splitnamestring:
                         name += "_" + _namekey
+                        if name[0] == "@":
+                            name = _namekey + name[1:]
+                        elif unsplitnamestring[0] == "~":
+                            unsplitnamestring = ""
                         unsplitnamestring_new += name + ","
                     unsplitnamestring = unsplitnamestring_new
                 newnamelist.append(unsplitnamestring)
