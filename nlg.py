@@ -23,10 +23,10 @@ class nlg:
     '''
     def __init__(self, source: str):
         self.process_file(source)
-        self.culturelist = self.__culturelist[1:]
-        self.namedict = {}
-        for namelist in self.__namelists:
-            namedict[namelist[0]] = namelist[1:]
+        #self.culturelist = self.__culturelist[1:]
+        #self.namedict = {}
+        #for namelist in self.__namelists:
+            #namedict[namelist[0]] = namelist[1:]
         self.append_keys()
 
     '''
@@ -36,53 +36,31 @@ class nlg:
         # open the file and extract the contents
         try:
             with open(source, encoding="cp1252") as openedsource:
-                culturelinestring = "#"
-                while(culturelinestring[0] == '#'):
-                    culturelinestring = \
-                        openedsource.readline()
-                namelines = openedsource.readlines()
+                keystring = "#"
+                while(keystring[0] == '#'):
+                    keystring = openedsource.readline()
+                culturelinelist = openedsource.readlines()
         except:
             print("Could not open file because it does not exist.")
             exit()
 
-        culturelist = culturelinestring.split(';')
-        namelists = []
-        for line in namelines:
-            if line[0] == '#':
-                continue
-            namelists.append(line.split(';'))
-        self.__culturelist = culturelist
-        self.__namelists = namelists
+        keylist = keystring.split(";")[1:]
+        culturedict = {}
+        for culturelinestr in culturelinelist:
+            culturenamelist = culturelinestr.split(";")
+            culturedict[culturenamelist[0]] = culturenamelist[1:0]
+        self.__culturedict = culturedict
+        self.__keylist = keylist
 
     '''
     Attaches key at the end of each name.
     '''
     def append_keys(self):
-        namedict = {}
-        # The dictionary contains the name key and the list of names
-        for _namekey, _namelist in self.namedict:
-            # because there are names which haven't been split
-            newnamelist = [] #list contains appended shit
-            for unsplitnamestring in _namelist:
-                if not ',' in unsplitnamestring:
-                    unsplitnamestring += "_" + _namekey
-                    if unsplitnamestring[0] == "@":
-                        unsplitnamestring = _namekey + unsplitnamestring[1:]
-                    elif unsplitnamestring[0] == "~":
-                        unsplitnamestring = ""
-                else:
-                    splitnamestring = unsplitnamestring.split(',')
-                    unsplitnamestring_new = ""
-                    for name in splitnamestring:
-                        name += "_" + _namekey
-                        if name[0] == "@":
-                            name = _namekey + name[1:]
-                        elif unsplitnamestring[0] == "~":
-                            unsplitnamestring = ""
-                        unsplitnamestring_new += name + ","
-                    unsplitnamestring = unsplitnamestring_new
-                newnamelist.append(unsplitnamestring)
-            namedict[_namekey] = newnamelist
+        # select a list for appending names in
+        for i, culturekey in zip(range(0, len(self.__keylist)),
+                                 self.__culturedict):
+            
+
 
 
 if __name__ == "__main__":
