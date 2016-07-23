@@ -40,7 +40,6 @@ class nlg:
                 while(namekeystring[0] == '#'):
                     namekeystring = openedsource.readline()
                 culturelinelist = openedsource.readlines()
-                #print(culturelinelist)
         except Exception as e:
             print("Could not open file because it does not exist.")
             print(e)
@@ -51,12 +50,9 @@ class nlg:
         culturedict = {}
         for culturelinestr in culturelinelist:
             culturenamelist = culturelinestr.split(";")
-            #print(culturelinestr)
             culturedict[culturenamelist[0]] = culturenamelist[1:-1]
         self.__culturedict = copy.deepcopy(culturedict)
         self.__namekeylist = copy.deepcopy(namekeylist)
-        #print(self.__culturedict)
-        #print(self.__namekeylist)
 
     '''
     Attaches key at the end of each name.
@@ -71,28 +67,22 @@ class nlg:
                 culturedict[culturekey][i] = \
                     self.__append_keys_(namekeylist[i],
                                         self.__culturedict[culturekey][i])
-        print(culturedict)
         self.__culturedict_ = copy.deepcopy(culturedict)
-        #print(self.__culturedict_)
 
     '''
     Helper function that appends the key at the end of each name and returns
     names contained in lists.
     '''
     def __append_keys_(self, namekey: str, namestring: str) -> list:
-        #if "~" in namestring:
-            #return []
-        #print(namestring)
+        # Having any other values would be a a contradiction so first check if
+        # there should be no variant of this name for this culture. If the user
+        # makes a mistake in the CSV file then the function presumes that this
+        # should not be used.
+        if "~" in namestring:
+            return []
         namelist = namestring.split(",")
         for i in range(0, len(namelist)):
-            if "~" in namelist[i]:
-                # having any other values would be a a contradiction so this is
-                # equivalent to namelist[i] == '~' and avoids the headache of
-                # deeper string-checking if the user formats the tuple
-                # incorrecty.
-                namelist = []
-                break
-            elif namelist[i] == "@":
+            if namelist[i] == "@":
                 namelist[i] = namekey + "_" + namekey
             else:
                 namelist[i] += "_" + namekey
@@ -102,13 +92,11 @@ class nlg:
 
     def prepare_name_strings(self):
         culturedict = {}
-        print(self.__culturedict_)
         for culturekey in self.__culturedict_:
             culturedict[culturekey] = \
                 self.__unpack_list_(self.__culturedict_[culturekey])
         # Finally ready for human consumption
         self.culturedict = copy.deepcopy(culturedict)
-        #print(self.culturedict)
 
     def __unpack_list_(self, namelist: list) -> list:
         unpackednamelist = []
@@ -119,7 +107,6 @@ class nlg:
 
 if __name__ == "__main__":
     import argparse
-    #from typing.io import TextIO
 
     '''
     As the name describes, it writes the names to file.
@@ -129,8 +116,12 @@ if __name__ == "__main__":
             with open(target, mode="w", encoding="cp1252") as opentarget:
                 for culturekey, namelist in culturedict.items():
                     opentarget.write(culturekey + " = {\n    ")
-                    for name in namelist:
-                        opentarget.write(name + " ")
+                    namelistlen = len(namelist)
+                    for i in range(0, namelistlen):
+                        if i < namelistlen-1:
+                            opentarget.write(namelist[i] + " ")
+                        else:
+                            opentarget.write(namelist[i])
                     opentarget.write("\n}")
         except Exception as e:
             print("Some serious error occurred.")
@@ -154,4 +145,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     nlg_obj = nlg(args.source)
     write_names_to_file(args.target, nlg_obj.culturedict)
-
