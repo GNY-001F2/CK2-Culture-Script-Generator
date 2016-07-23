@@ -87,7 +87,13 @@ class nlg:
             else:
                 namelist[i] += "_" + namekey
             if " " in namelist[i]:
-                namelist[i] = "\"" + namelist[i] + "\""
+                spacedname = ""
+                for letter in namelist[i]:
+                    if not letter == " ":
+                        spacedname += letter
+                    else:
+                        spacedname += "\xa0" # NBSP
+                namelist[i] = "\"" + spacedname + "\""
         return namelist
 
     def prepare_name_strings(self):
