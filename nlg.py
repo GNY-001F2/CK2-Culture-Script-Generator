@@ -41,21 +41,18 @@ class nlg:
                     namekeystring = openedsource.readline()
                 culturelinelist = openedsource.readlines()
                 #print(culturelinelist)
-        except:
+        except Exception as e:
             print("Could not open file because it does not exist.")
+            print(e)
             exit()
         # Need to remove the newlines
-        namekeystring = namekeystring[:-1]
-        for i in range(0, len(culturelinelist)):
-            culturelinelist[i] = culturelinelist[i][:-1]
-        #print(namekeystring)
-        #print(culturelinelist)
-        namekeylist = namekeystring.split(";")[1:]
+        # use ";" to terminate the line
+        namekeylist = namekeystring.split(";")[1:-1]
         culturedict = {}
         for culturelinestr in culturelinelist:
             culturenamelist = culturelinestr.split(";")
             #print(culturelinestr)
-            culturedict[culturenamelist[0]] = culturenamelist[1:]
+            culturedict[culturenamelist[0]] = culturenamelist[1:-1]
         self.__culturedict = copy.deepcopy(culturedict)
         self.__namekeylist = copy.deepcopy(namekeylist)
         #print(self.__culturedict)
@@ -66,14 +63,15 @@ class nlg:
     '''
     def append_keys(self):
 
-        namekeylist = self.__namekeylist
+        namekeylist = copy.deepcopy(self.__namekeylist)
         # Use local copy instead of modifying global instance variables
         culturedict = copy.deepcopy(self.__culturedict)
-        for i, culturekey in zip(range(0, len(namekeylist)),
-                                 self.__culturedict):
-            culturedict[culturekey][i] = \
-                self.__append_keys_(namekeylist[i],
-                                    self.__culturedict[culturekey][i])
+        for i in range(0, len(namekeylist)):
+            for culturekey in culturedict:
+                culturedict[culturekey][i] = \
+                    self.__append_keys_(namekeylist[i],
+                                        self.__culturedict[culturekey][i])
+        print(culturedict)
         self.__culturedict_ = copy.deepcopy(culturedict)
         #print(self.__culturedict_)
 
@@ -82,6 +80,9 @@ class nlg:
     names contained in lists.
     '''
     def __append_keys_(self, namekey: str, namestring: str) -> list:
+        #if "~" in namestring:
+            #return []
+        #print(namestring)
         namelist = namestring.split(",")
         for i in range(0, len(namelist)):
             if "~" in namelist[i]:
@@ -101,13 +102,13 @@ class nlg:
 
     def prepare_name_strings(self):
         culturedict = {}
-        #print(self.__culturedict_)
+        print(self.__culturedict_)
         for culturekey in self.__culturedict_:
             culturedict[culturekey] = \
                 self.__unpack_list_(self.__culturedict_[culturekey])
         # Finally ready for human consumption
         self.culturedict = copy.deepcopy(culturedict)
-        print(self.culturedict)
+        #print(self.culturedict)
 
     def __unpack_list_(self, namelist: list) -> list:
         unpackednamelist = []
@@ -118,17 +119,23 @@ class nlg:
 
 if __name__ == "__main__":
     import argparse
-    from typing.io import TextIO
+    #from typing.io import TextIO
 
     '''
     As the name describes, it writes the names to file.
     '''
-    def write_names_to_file(target: TextIO, culturedict: dict):
-        for culturekey, namelist in culturedict:
-            target.write(culturekey+" = {\n    ")
-            for name in namelist:
-                target.write(name + " ")
-            target.write("\n}")
+    def write_names_to_file(target: str, culturedict: dict):
+        try:
+            with open(target, mode="w", encoding="cp1252") as opentarget:
+                for culturekey, namelist in culturedict.items():
+                    opentarget.write(culturekey + " = {\n    ")
+                    for name in namelist:
+                        opentarget.write(name + " ")
+                    opentarget.write("\n}")
+        except Exception as e:
+            print("Some serious error occurred.")
+            print(e)
+            exit()
 
     parser = \
         argparse.ArgumentParser(description="Generate a list of names",
@@ -146,8 +153,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     nlg_obj = nlg(args.source)
-    try:
-        with open(args.target, mode="w", encoding="cp1252") as target:
-            write_names_to_file(target, nlg_obj.culturedict)
-    except:
-        print("Some serious error occurred.")
+    write_names_to_file(args.target, nlg_obj.culturedict)
+
